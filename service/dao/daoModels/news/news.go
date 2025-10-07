@@ -10,7 +10,7 @@ const (
 )
 
 type BaseNews struct {
-	SourceNews  string         `json:"-"`
+	SourceNews  string         `json:"source_news"`
 	Title       string         `json:"title"`
 	DetailURL   string         `json:"detail_url"`
 	Tags        pq.StringArray `json:"tags" gorm:"type:text[]"`

@@ -3,6 +3,7 @@ package NewsApi
 import (
 	"News/service/controller/newsCtrl"
 	newsDaoModel "News/service/dao/daoModels/news"
+	daoModel "News/service/internal/database"
 	boNews "News/service/internal/model/bo/news"
 	"News/service/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ func NewNews(pack newsApiPack) {
 	{
 		group.POST("CreateNewsOuterLayer", c.createNewsOuterLayer)
 		group.GET("GetNewsOuterLayer", c.getNewsOuterLayer)
+		group.GET("GetFilterOuterLayer", c.getFilterOuterLayer)
 	}
 
 }
@@ -116,6 +118,69 @@ func (api *newsApi) getNewsOuterLayer(ctx *gin.Context) {
 		return
 	}
 
+	if len(reply.Data) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "no data found",
+		})
+	}
+	ctx.JSON(http.StatusOK, reply.Data)
+}
+
+func (api *newsApi) getFilterOuterLayer(ctx *gin.Context) {
+	var model = struct {
+		Filter struct {
+			SourceNews string   `json:"source_news"`
+			Category   string   `json:"category"`
+			Tags       []string `json:"tags" valid:"required"`
+		} `json:"filter"`
+
+		TimeInterval struct {
+			StartTime utils.CustomTime `json:"start_time"`
+			EndTime   utils.CustomTime `json:"end_time"`
+		} `json:"time_interval"`
+
+		Pagination struct {
+			PageSize   int `json:"page_size"`
+			PageNumber int `json:"page_number"`
+		} `json:"pagination"`
+	}{}
+
+	if err := ctx.BindJSON(&model); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid json body: " + err.Error()})
+		return
+	}
+
+	boArgs := &boNews.GetFilterOuterLayerArgs{
+		Query: &newsDaoModel.OuterLayer{
+			BaseNews: newsDaoModel.BaseNews{
+				SourceNews: model.Filter.SourceNews,
+				Category:   model.Filter.Category,
+				Tags:       model.Filter.Tags,
+			},
+		},
+
+		TimeInterval: daoModel.TimeInterval{
+			StartTime: model.TimeInterval.StartTime.Time,
+			EndTime:   model.TimeInterval.EndTime.Time,
+		},
+
+		Pagination: daoModel.Pagenation{
+			PageSize:   model.Pagination.PageSize,
+			PageNumber: model.Pagination.PageNumber,
+		},
+	}
+
+	reply, err := api.pack.NewsCtrl.GetFilterOuterLayer(ctx, boArgs)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(reply.Data) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "no data found",
+		})
+	}
 	ctx.JSON(http.StatusOK, reply)
 
 }

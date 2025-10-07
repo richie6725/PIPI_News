@@ -20,6 +20,7 @@ type newsCtrlPack struct {
 type NewsCtrl interface {
 	CreateOuterLayer(ctx context.Context, args *boNews.CreateOuterLayerArgs) error
 	GetOuterLayer(ctx context.Context, args *boNews.GetOuterLayerArgs) (*boNews.GetOuterLayerReply, error)
+	GetFilterOuterLayer(ctx context.Context, args *boNews.GetFilterOuterLayerArgs) (*boNews.GetFilterOuterLayerReply, error)
 }
 
 func NewNews(pack newsCtrlPack) NewsCtrl {
@@ -30,9 +31,9 @@ func NewNews(pack newsCtrlPack) NewsCtrl {
 
 func (ctrl *newsCtrl) CreateOuterLayer(ctx context.Context, args *boNews.CreateOuterLayerArgs) error {
 
-	aclDao := newsOuterLayer.New(ctrl.pack.Postgres)
+	newsDao := newsOuterLayer.New(ctrl.pack.Postgres)
 
-	err := aclDao.Create(ctx, args.Query, args.SourceNews)
+	err := newsDao.Create(ctx, args.Query, args.SourceNews)
 	if err != nil {
 		return err
 	}
@@ -41,15 +42,31 @@ func (ctrl *newsCtrl) CreateOuterLayer(ctx context.Context, args *boNews.CreateO
 }
 
 func (ctrl *newsCtrl) GetOuterLayer(ctx context.Context, args *boNews.GetOuterLayerArgs) (*boNews.GetOuterLayerReply, error) {
-	aclDao := newsOuterLayer.New(ctrl.pack.Postgres)
-	results, err := aclDao.Get(ctx, args.Query)
+	newsDao := newsOuterLayer.New(ctrl.pack.Postgres)
+	outerLayers, err := newsDao.Get(ctx, args.Query)
 
 	if err != nil {
 		return nil, err
 	}
 
-	reply := &boNews.GetOuterLayerReply{
-		Data: results,
+	result := &boNews.GetOuterLayerReply{
+		Data: outerLayers,
+	}
+
+	return result, nil
+}
+
+func (ctrl *newsCtrl) GetFilterOuterLayer(ctx context.Context, args *boNews.GetFilterOuterLayerArgs) (*boNews.GetFilterOuterLayerReply, error) {
+	newsDao := newsOuterLayer.New(ctrl.pack.Postgres)
+	filteredOuters, err := newsDao.GetFilter(ctx, args.Query, args.Pagination, args.TimeInterval)
+
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &boNews.GetFilterOuterLayerReply{
+		Data:       filteredOuters,
+		Pagination: args.Pagination,
 	}
 
 	return reply, nil
