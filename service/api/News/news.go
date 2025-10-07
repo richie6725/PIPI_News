@@ -83,11 +83,13 @@ func (api *newsApi) createNewsOuterLayer(ctx *gin.Context) {
 
 func (api *newsApi) getNewsOuterLayer(ctx *gin.Context) {
 
-	var model []struct {
-		SourceNews string `json:"source_news"`
-		NewsID     int    `json:"news_id"`
-		Title      string `json:"title"`
-	}
+	var model = struct {
+		OuterLayer []struct {
+			SourceNews string `json:"source_news" valid:"required"`
+			NewsID     int    `json:"news_id" valid:"required"`
+			Title      string `json:"title" valid:"required"`
+		} `json:"outer_layer"`
+	}{}
 
 	if err := ctx.BindJSON(&model); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid json body: " + err.Error()})
@@ -95,10 +97,10 @@ func (api *newsApi) getNewsOuterLayer(ctx *gin.Context) {
 	}
 
 	boArgs := &boNews.GetOuterLayerArgs{
-		Query: make([]*newsDaoModel.OuterLayer, 0, len(model)),
+		Query: make([]*newsDaoModel.OuterLayer, 0, len(model.OuterLayer)),
 	}
 
-	for _, item := range model {
+	for _, item := range model.OuterLayer {
 		boArgs.Query = append(boArgs.Query, &newsDaoModel.OuterLayer{
 			BaseNews: newsDaoModel.BaseNews{
 				SourceNews: item.SourceNews,
