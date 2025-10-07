@@ -1,0 +1,46 @@
+{
+  "DatabaseManageSystem": {
+    "MongoDB": {
+      "RichieMongo": {
+        "Host": "localhost",
+        "Port": "27017",
+        "User": "",
+        "Password": "",
+        "Database": "my_test_db"
+      }
+    },
+    "Redis": {
+      "RichieRedis": {
+        "Host": "localhost",
+        "Port": "6379",
+        "Password": "",
+        "Database": 0
+      }
+    },
+    "MariaDB": {
+      "RichieMaria": {
+        "Host": "localhost",
+        "Port": "3306",
+        "Account": "richie",
+        "Password": "richiepass",
+        "Database": "mydb",
+        "MaxIdle": 3,
+        "MaxOpen": 8
+      }
+    },
+    "Postgres": {
+      "RichiePostgres": {
+        "Host": "localhost",
+        "Port": "5432",
+        "User": "admin",
+        "Password": "admin123",
+        "Database": "newsdb",
+        "MaxIdle": 3,
+        "MaxOpen": 8
+      }
+    }
+  },
+  "service_address": {
+    "News": ":8000"
+  }
+}

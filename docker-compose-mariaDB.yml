@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mariadb:10.11
+    container_name: test-mariaDB
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: richie
+      MYSQL_PASSWORD: richiepass
+    ports:
+      - "3306:3306"
+    volumes:
+      - /Users/richie.lo/GolandProjects/mariaDB_volumn/mysql_data:/var/lib/mysql
