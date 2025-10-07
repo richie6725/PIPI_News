@@ -19,6 +19,7 @@ type newsCtrlPack struct {
 
 type NewsCtrl interface {
 	CreateOuterLayer(ctx context.Context, args *boNews.CreateOuterLayerArgs) error
+	GetOuterLayer(ctx context.Context, args *boNews.GetOuterLayerArgs) (*boNews.GetOuterLayerReply, error)
 }
 
 func NewNews(pack newsCtrlPack) NewsCtrl {
@@ -31,10 +32,25 @@ func (ctrl *newsCtrl) CreateOuterLayer(ctx context.Context, args *boNews.CreateO
 
 	aclDao := newsOuterLayer.New(ctrl.pack.Postgres)
 
-	err := aclDao.Create(ctx, args.Query, args.Source)
+	err := aclDao.Create(ctx, args.Query, args.SourceNews)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (ctrl *newsCtrl) GetOuterLayer(ctx context.Context, args *boNews.GetOuterLayerArgs) (*boNews.GetOuterLayerReply, error) {
+	aclDao := newsOuterLayer.New(ctrl.pack.Postgres)
+	results, err := aclDao.Get(ctx, args.Query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &boNews.GetOuterLayerReply{
+		Data: results,
+	}
+
+	return reply, nil
 }

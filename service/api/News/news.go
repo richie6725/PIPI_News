@@ -15,6 +15,7 @@ func NewNews(pack newsApiPack) {
 	group := pack.Root.Group("news")
 	{
 		group.POST("CreateNewsOuterLayer", c.createNewsOuterLayer)
+		group.GET("GetNewsOuterLayer", c.getNewsOuterLayer)
 	}
 
 }
@@ -43,7 +44,7 @@ func (api *newsApi) createNewsOuterLayer(ctx *gin.Context) {
 			CategoryURL string           `json:"category_url" valid:"required"`
 		} `json:"outer_layer"`
 
-		Source string `json:"source" valid:"required"`
+		SourceNews string `json:"source_news" valid:"required"`
 	}{}
 
 	if err := ctx.BindJSON(&model); err != nil {
@@ -52,8 +53,8 @@ func (api *newsApi) createNewsOuterLayer(ctx *gin.Context) {
 	}
 
 	boArgs := &boNews.CreateOuterLayerArgs{
-		Source: model.Source,
-		Query:  make([]*newsDaoModel.OuterLayer, 0, len(model.OuterLayer)),
+		SourceNews: model.SourceNews,
+		Query:      make([]*newsDaoModel.OuterLayer, 0, len(model.OuterLayer)),
 	}
 
 	for _, item := range model.OuterLayer {
@@ -78,4 +79,41 @@ func (api *newsApi) createNewsOuterLayer(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
+}
+
+func (api *newsApi) getNewsOuterLayer(ctx *gin.Context) {
+
+	var model []struct {
+		SourceNews string `json:"source_news"`
+		NewsID     int    `json:"news_id"`
+		Title      string `json:"title"`
+	}
+
+	if err := ctx.BindJSON(&model); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid json body: " + err.Error()})
+		return
+	}
+
+	boArgs := &boNews.GetOuterLayerArgs{
+		Query: make([]*newsDaoModel.OuterLayer, 0, len(model)),
+	}
+
+	for _, item := range model {
+		boArgs.Query = append(boArgs.Query, &newsDaoModel.OuterLayer{
+			BaseNews: newsDaoModel.BaseNews{
+				SourceNews: item.SourceNews,
+				NewsID:     item.NewsID,
+				Title:      item.Title,
+			},
+		})
+	}
+
+	reply, err := api.pack.NewsCtrl.GetOuterLayer(ctx, boArgs)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, reply)
+
 }
