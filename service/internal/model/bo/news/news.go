@@ -12,6 +12,23 @@ type CreateOuterLayerArgs struct {
 
 type CreateOuterLayerReply struct{}
 
+type CreateNewsArgs struct {
+	Query      []*newsDaoModel.News
+	SourceNews string
+}
+
+type CreateNewsReply struct {
+}
+
+type GetNewsArgs struct {
+	Query      []*newsDaoModel.News
+	SourceNews []string
+}
+
+type GetNewsReply struct {
+	Data []*newsDaoModel.News
+}
+
 type GetOuterLayerArgs struct {
 	Query []*newsDaoModel.OuterLayer
 }

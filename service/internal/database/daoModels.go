@@ -8,6 +8,6 @@ type TimeInterval struct {
 }
 
 type Pagenation struct {
-	PageSize   int `bson:"page_size" json:"page_size"`
-	PageNumber int `bson:"page_number" json:"page_number"`
+	PageSize int `bson:"page_size" json:"page_size"`
+	Page     int `bson:"page" json:"page"`
 }

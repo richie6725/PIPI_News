@@ -37,6 +37,15 @@
         "Database": "newsdb",
         "MaxIdle": 3,
         "MaxOpen": 8
+      },
+      "RemotePostgres": {
+        "Host": "36.239.57.99",
+        "Port": "8080",
+        "User": "postgres",
+        "Password": "67256725",
+        "Database": "postgres",
+        "MaxIdle": 3,
+        "MaxOpen": 8
       }
     }
   },

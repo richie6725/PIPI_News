@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	mongoLocal    = "RichieMongo"
-	redisLocal    = "RichieRedis"
-	mariaLocal    = "RichieMaria"
-	postgresLocal = "RichiePostgres"
+	mongoLocal     = "RichieMongo"
+	redisLocal     = "RichieRedis"
+	mariaLocal     = "RichieMaria"
+	postgresLocal  = "RichiePostgres"
+	postgresRemote = "RemotePostgres"
 )
 
 type NewsOut struct {
@@ -28,7 +29,10 @@ func NewNews(ctx context.Context, dbms config.DatabaseManageSystem) NewsOut {
 	return NewsOut{
 		MongoLocal:    newMongoDB(ctx, mongoLocal, dbms.MongoDBSystem[mongoLocal]),
 		PostgresLocal: newPostgres(postgresLocal, dbms.PostgresSystem[postgresLocal]),
-		RedisLocal:    newRedis(ctx, redisLocal, dbms.RedisSystem[redisLocal]),
-		MariaLocal:    newMariaDB(mariaLocal, dbms.MariaDBSystem[mariaLocal]),
+
+		// 使用remote postgres連線
+		//PostgresLocal: newPostgres(postgresRemote, dbms.PostgresSystem[postgresRemote]),
+		RedisLocal: newRedis(ctx, redisLocal, dbms.RedisSystem[redisLocal]),
+		MariaLocal: newMariaDB(mariaLocal, dbms.MariaDBSystem[mariaLocal]),
 	}
 }

@@ -16,18 +16,31 @@ type CustomTime struct {
 	time.Time
 }
 
-const ctLayout = "2006-01-02 15:04:05" // 這是 Go 用來匹配時間格式的特殊記憶字串
-
 func (ct *CustomTime) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
-	if s == "null" {
+	if s == "" || s == "null" {
 		ct.Time = time.Time{}
 		return nil
 	}
-	t, err := time.Parse(ctLayout, s)
-	if err != nil {
-		return fmt.Errorf("failed to parse time: %w", err)
+
+	// 定義可接受的多種時間格式
+	layouts := []string{
+		time.RFC3339,          // "2025-09-30T23:59:59Z"
+		"2006-01-02 15:04:05", // "2025-09-30 23:59:59"
+		"2006-01-02",          // "2025-09-30"
 	}
-	ct.Time = t
-	return nil
+
+	var parsed time.Time
+	var err error
+
+	for _, layout := range layouts {
+		parsed, err = time.Parse(layout, s)
+		if err == nil {
+			ct.Time = parsed
+			return nil
+		}
+	}
+
+	// 若全部格式都解析失敗
+	return fmt.Errorf("failed to parse time: %s", s)
 }

@@ -4,8 +4,10 @@ import (
 	newsDaoModel "News/service/dao/daoModels/news"
 	daoModel "News/service/internal/database"
 	"context"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type NewsOuterLayerDao interface {
@@ -32,9 +34,9 @@ func (dao *newsOuterLayerDao) Get(ctx context.Context, query []*newsDaoModel.Out
 	db := dao.db.WithContext(ctx).Table(newsDaoModel.Table)
 
 	for i, item := range query {
-		condition := dao.db.Where("source_news = ?", item.SourceNews).
-			Where("news_id = ?", item.NewsID).
-			Where("title = ?", item.Title)
+		condition := dao.db.Where(newsDaoModel.SourceNews.AddField(), item.SourceNews).
+			Where(newsDaoModel.ID.AddField(), item.NewsID).
+			Where(newsDaoModel.Title.AddField(), item.Title)
 		if i == 0 {
 			db = db.Where(condition)
 		} else {
@@ -43,7 +45,7 @@ func (dao *newsOuterLayerDao) Get(ctx context.Context, query []*newsDaoModel.Out
 	}
 
 	var results []*newsDaoModel.OuterLayer
-	if err := db.Order("news_id DESC").Find(&results).Error; err != nil {
+	if err := db.Order(newsDaoModel.ID + "DESC").Find(&results).Error; err != nil {
 		return nil, fmt.Errorf("database error on bulk get: %w", err)
 	}
 
@@ -61,16 +63,60 @@ func (dao *newsOuterLayerDao) Create(ctx context.Context, query []*newsDaoModel.
 
 	if err := dao.db.WithContext(ctx).
 		Table(newsDaoModel.Table).
-		Create(&query).Error; err != nil {
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "source_news"}, {Name: "news_id"}},
+			UpdateAll: true,
+		}).
+		Create(&query); err != nil {
 		return fmt.Errorf("failed to insert news outer layer: %w", err)
 	}
 
 	return nil
 }
-
 func (dao *newsOuterLayerDao) GetFilter(ctx context.Context, query *newsDaoModel.OuterLayer, pagination daoModel.Pagenation, timeInterval daoModel.TimeInterval) ([]*newsDaoModel.OuterLayer, error) {
 
-	//if err:=dao.db.WithContext(ctx).
+	db := dao.db.WithContext(ctx).Table(newsDaoModel.Table)
 
-	return nil, nil
+	var hasConditions bool
+
+	if query.SourceNews != "" {
+		db = db.Where(newsDaoModel.SourceNews.AddField(), query.SourceNews)
+		hasConditions = true
+	}
+
+	if query.Category != "" {
+		db = db.Where(newsDaoModel.Category.AddField(), query.Category)
+		hasConditions = true
+	}
+
+	if len(query.Tags) > 0 {
+		db = db.Where(newsDaoModel.Tags.ContainField(), query.Tags)
+		hasConditions = true
+	}
+
+	if !timeInterval.StartTime.IsZero() {
+		db = db.Where(newsDaoModel.ReleaseTime.MoreThanEqualField(), timeInterval.StartTime)
+		hasConditions = true
+	}
+	if !timeInterval.EndTime.IsZero() {
+		db = db.Where(newsDaoModel.ReleaseTime.LessThanEqualField(), timeInterval.EndTime)
+		hasConditions = true
+	}
+
+	if !hasConditions {
+		return nil, errors.New("at least one filter condition is required")
+	}
+
+	pageSkip := pagination.PageSize * (pagination.Page - 1)
+
+	if pagination.PageSize > 0 {
+		db = db.Offset(pageSkip).Limit(pagination.PageSize)
+	}
+
+	var results []*newsDaoModel.OuterLayer
+	if err := db.Order(newsDaoModel.ID + "DESC").Find(&results).Error; err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
