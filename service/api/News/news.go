@@ -20,6 +20,7 @@ func NewNews(pack newsApiPack) {
 		group.POST("CreateNewsOuterLayer", c.createNewsOuterLayer)
 		group.POST("CreateNews", c.createNews)
 		group.GET("GetNews", c.getNews)
+		group.GET("GetNewsFilter", c.getNewsFilter)
 		group.GET("GetNewsOuterLayer", c.getNewsOuterLayer)
 		group.GET("GetFilterOuterLayer", c.getFilterOuterLayer)
 	}
@@ -217,6 +218,67 @@ func (api *newsApi) getNews(ctx *gin.Context) {
 		})
 	}
 	ctx.JSON(http.StatusOK, reply.Data)
+
+}
+
+func (api *newsApi) getNewsFilter(ctx *gin.Context) {
+	var model = struct {
+		Filter struct {
+			SourceNews string   `json:"source_news"`
+			Category   string   `json:"category"`
+			Tags       []string `json:"tags" valid:"required"`
+		} `json:"filter"`
+
+		TimeInterval struct {
+			StartTime time.Time `json:"start_time"`
+			EndTime   time.Time `json:"end_time"`
+		} `json:"time_interval"`
+
+		Pagination struct {
+			PageSize int `json:"page_size"`
+			Page     int `json:"page"`
+		} `json:"pagination"`
+	}{}
+
+	if err := ctx.BindJSON(&model); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid json body: " + err.Error()})
+		return
+	}
+
+	boArgs := &boNews.GetNewsFilterArgs{
+		Query: &newsDaoModel.News{
+			Category:  model.Filter.Category,
+			TitleTags: model.Filter.Tags,
+		},
+		SourceNews: model.Filter.SourceNews,
+
+		TimeInterval: &daoModel.TimeInterval{
+			StartTime: model.TimeInterval.StartTime,
+			EndTime:   model.TimeInterval.EndTime,
+		},
+
+		Pagination: &daoModel.Pagenation{
+			PageSize: model.Pagination.PageSize,
+			Page:     model.Pagination.Page,
+		},
+	}
+
+	if boArgs.Pagination.PageSize > 20 {
+		boArgs.Pagination.PageSize = 20
+	}
+
+	reply, err := api.pack.NewsCtrl.GetNewsFilter(ctx, boArgs)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(reply.Data) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "no data found",
+		})
+	}
+	ctx.JSON(http.StatusOK, reply)
 
 }
 

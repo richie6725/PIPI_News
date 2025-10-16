@@ -2,6 +2,7 @@ package news
 
 import (
 	newsDaoModel "News/service/dao/daoModels/news"
+	"News/service/internal/database"
 	"context"
 	"fmt"
 	"gorm.io/gorm"
@@ -11,6 +12,7 @@ import (
 type NewsDao interface {
 	Create(ctx context.Context, query []*newsDaoModel.News, sourceNews string) error
 	Get(ctx context.Context, query []*newsDaoModel.News, sourceNews []string) ([]*newsDaoModel.News, error)
+	GetFilter(ctx context.Context, query *newsDaoModel.News, sourceNews string, timeInterval *database.TimeInterval, pageNation *database.Pagenation) ([]*newsDaoModel.News, error)
 }
 
 func New(db *gorm.DB) NewsDao {
@@ -52,6 +54,88 @@ func (dao *newsDao) Get(ctx context.Context, query []*newsDaoModel.News, sourceN
 			return nil, fmt.Errorf("failed to get news from table: %w", err)
 		}
 		results = append(results, &output)
+	}
+
+	return results, nil
+}
+
+//func (dao *newsDao) GetFilter(ctx context.Context, query *newsDaoModel.News, sourceNews string, timeInterval *database.TimeInterval, pageNation *database.Pagenation) ([]*newsDaoModel.News, error) {
+//
+//	var (
+//		results []*newsDaoModel.News
+//	)
+//
+//	if err := dao.db.WithContext(ctx).Table(sourceNews+"_"+newsDaoModel.TableNews).
+//		Where(newsDaoModel.Category.AddField(), query.Category).
+//		Where(newsDaoModel.TitleTags.OverlapsField(), query.TitleTags).
+//		Where(newsDaoModel.ReleaseTime.MoreThanEqualField(), timeInterval.StartTime).
+//		Where(newsDaoModel.ReleaseTime.LessThanEqualField(), timeInterval.EndTime).Find(&results).Error; err != nil {
+//		return nil, fmt.Errorf("failed to get news from table: %w", err)
+//	}
+//
+//	return results, nil
+//}
+
+func (dao *newsDao) GetFilter(
+	ctx context.Context,
+	query *newsDaoModel.News,
+	sourceNews string,
+	timeInterval *database.TimeInterval,
+	pageNation *database.Pagenation,
+) ([]*newsDaoModel.News, error) {
+
+	var (
+		results []*newsDaoModel.News
+	)
+
+	db := dao.db.WithContext(ctx).Table(sourceNews + "_" + newsDaoModel.TableNews)
+
+	// -------------------------------
+	// 動態條件組合
+	// -------------------------------
+	filterCount := 0
+
+	if query.Category != "" {
+		db = db.Where(newsDaoModel.Category.AddField(), query.Category)
+		filterCount++
+	}
+
+	if len(query.TitleTags) > 0 {
+		db = db.Where(newsDaoModel.TitleTags.OverlapsField(), query.TitleTags)
+		filterCount++
+	}
+
+	if !timeInterval.StartTime.IsZero() {
+		db = db.Where(newsDaoModel.ReleaseTime.MoreThanEqualField(), timeInterval.StartTime)
+		filterCount++
+	}
+
+	if !timeInterval.EndTime.IsZero() {
+		db = db.Where(newsDaoModel.ReleaseTime.LessThanEqualField(), timeInterval.EndTime)
+		filterCount++
+	}
+
+	// -------------------------------
+	// 安全檢查：至少要有一個篩選條件
+	// -------------------------------
+	if filterCount == 0 {
+		return nil, fmt.Errorf("no valid filter provided — at least one condition is required")
+	}
+
+	// -------------------------------
+	// 分頁處理
+	// -------------------------------
+	if pageNation.PageSize > 0 {
+		offset := (pageNation.Page - 1) * pageNation.PageSize
+		db = db.Offset(offset).Limit(pageNation.PageSize)
+	}
+
+	// -------------------------------
+	// 查詢執行
+	// -------------------------------
+	if err := db.Order(newsDaoModel.ReleaseTime.String() + " DESC").
+		Find(&results).Error; err != nil {
+		return nil, fmt.Errorf("failed to get news from table: %w", err)
 	}
 
 	return results, nil

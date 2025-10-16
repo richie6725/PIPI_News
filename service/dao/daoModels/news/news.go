@@ -18,7 +18,7 @@ const (
 	ID          FieldName = "id"
 	Title       FieldName = "title"
 	DetailURL   FieldName = "detail_url"
-	Tags        FieldName = "tags"
+	TitleTags   FieldName = "title_tags"
 	ImgURL      FieldName = "img_url"
 	ReleaseTime FieldName = "release_time"
 	Category    FieldName = "category"

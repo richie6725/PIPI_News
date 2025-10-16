@@ -4,6 +4,7 @@ import (
 	"News/service/dao/gormDao/news"
 	"News/service/dao/gormDao/newsOuterLayer"
 	boNews "News/service/internal/model/bo/news"
+	"News/service/internal/utils"
 	"context"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
@@ -22,6 +23,7 @@ type NewsCtrl interface {
 	CreateOuterLayer(ctx context.Context, args *boNews.CreateOuterLayerArgs) error
 	CreateNews(ctx context.Context, args *boNews.CreateNewsArgs) error
 	GetNews(ctx context.Context, args *boNews.GetNewsArgs) (*boNews.GetNewsReply, error)
+	GetNewsFilter(ctx context.Context, args *boNews.GetNewsFilterArgs) (*boNews.GetNewsFilterReply, error)
 
 	GetOuterLayer(ctx context.Context, args *boNews.GetOuterLayerArgs) (*boNews.GetOuterLayerReply, error)
 	GetFilterOuterLayer(ctx context.Context, args *boNews.GetFilterOuterLayerArgs) (*boNews.GetFilterOuterLayerReply, error)
@@ -68,6 +70,23 @@ func (ctrl *newsCtrl) GetNews(ctx context.Context, args *boNews.GetNewsArgs) (*b
 
 	reply := &boNews.GetNewsReply{
 		Data: eachNewsData,
+	}
+
+	return reply, nil
+}
+
+func (ctrl *newsCtrl) GetNewsFilter(ctx context.Context, args *boNews.GetNewsFilterArgs) (*boNews.GetNewsFilterReply, error) {
+
+	newsDao := news.New(ctrl.pack.Postgres)
+	filteredData, err := newsDao.GetFilter(ctx, args.Query, args.SourceNews, args.TimeInterval, args.Pagination)
+
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &boNews.GetNewsFilterReply{
+		Data:       filteredData,
+		Pagination: utils.BuildPagination(args.Pagination.Page, args.Pagination.PageSize, len(filteredData)),
 	}
 
 	return reply, nil

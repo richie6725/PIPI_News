@@ -8,8 +8,16 @@ func (f FieldName) AddField() string {
 	return fmt.Sprintf("%s = ?", f)
 }
 
-func (f FieldName) ContainField() string {
+func (f FieldName) ContainAllField() string {
 	return fmt.Sprintf("%s @> ?", f)
+}
+
+func (f FieldName) ContainInField() string {
+	return fmt.Sprintf("%s <@ ?", f)
+}
+
+func (f FieldName) OverlapsField() string {
+	return fmt.Sprintf("%s && ?", f)
 }
 
 func (f FieldName) MoreThanField() string {

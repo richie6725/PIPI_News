@@ -90,7 +90,7 @@ func (dao *newsOuterLayerDao) GetFilter(ctx context.Context, query *newsDaoModel
 	}
 
 	if len(query.Tags) > 0 {
-		db = db.Where(newsDaoModel.Tags.ContainField(), query.Tags)
+		db = db.Where(newsDaoModel.TitleTags.OverlapsField(), query.Tags)
 		hasConditions = true
 	}
 
