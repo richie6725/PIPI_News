@@ -2,7 +2,6 @@ package newsCtrl
 
 import (
 	"News/service/dao/gormDao/news"
-	"News/service/dao/gormDao/newsOuterLayer"
 	boNews "News/service/internal/model/bo/news"
 	"News/service/internal/utils"
 	"context"
@@ -20,31 +19,15 @@ type newsCtrlPack struct {
 }
 
 type NewsCtrl interface {
-	CreateOuterLayer(ctx context.Context, args *boNews.CreateOuterLayerArgs) error
 	CreateNews(ctx context.Context, args *boNews.CreateNewsArgs) error
 	GetNews(ctx context.Context, args *boNews.GetNewsArgs) (*boNews.GetNewsReply, error)
 	GetNewsFilter(ctx context.Context, args *boNews.GetNewsFilterArgs) (*boNews.GetNewsFilterReply, error)
-
-	GetOuterLayer(ctx context.Context, args *boNews.GetOuterLayerArgs) (*boNews.GetOuterLayerReply, error)
-	GetFilterOuterLayer(ctx context.Context, args *boNews.GetFilterOuterLayerArgs) (*boNews.GetFilterOuterLayerReply, error)
 }
 
 func NewNews(pack newsCtrlPack) NewsCtrl {
 	return &newsCtrl{
 		pack: pack,
 	}
-}
-
-func (ctrl *newsCtrl) CreateOuterLayer(ctx context.Context, args *boNews.CreateOuterLayerArgs) error {
-
-	newsOuterLayerDao := newsOuterLayer.New(ctrl.pack.Postgres)
-
-	err := newsOuterLayerDao.Create(ctx, args.Query, args.SourceNews)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (ctrl *newsCtrl) CreateNews(ctx context.Context, args *boNews.CreateNewsArgs) error {
@@ -87,37 +70,6 @@ func (ctrl *newsCtrl) GetNewsFilter(ctx context.Context, args *boNews.GetNewsFil
 	reply := &boNews.GetNewsFilterReply{
 		Data:       filteredData,
 		Pagination: utils.BuildPagination(args.Pagination.Page, args.Pagination.PageSize, len(filteredData)),
-	}
-
-	return reply, nil
-}
-
-func (ctrl *newsCtrl) GetOuterLayer(ctx context.Context, args *boNews.GetOuterLayerArgs) (*boNews.GetOuterLayerReply, error) {
-	newsOuterLayerDao := newsOuterLayer.New(ctrl.pack.Postgres)
-	outerLayers, err := newsOuterLayerDao.Get(ctx, args.Query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	result := &boNews.GetOuterLayerReply{
-		Data: outerLayers,
-	}
-
-	return result, nil
-}
-
-func (ctrl *newsCtrl) GetFilterOuterLayer(ctx context.Context, args *boNews.GetFilterOuterLayerArgs) (*boNews.GetFilterOuterLayerReply, error) {
-	newsOuterLayerDao := newsOuterLayer.New(ctrl.pack.Postgres)
-	filteredOuters, err := newsOuterLayerDao.GetFilter(ctx, args.Query, args.Pagination, args.TimeInterval)
-
-	if err != nil {
-		return nil, err
-	}
-
-	reply := &boNews.GetFilterOuterLayerReply{
-		Data:       filteredOuters,
-		Pagination: args.Pagination,
 	}
 
 	return reply, nil

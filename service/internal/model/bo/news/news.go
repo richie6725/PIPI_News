@@ -6,13 +6,6 @@ import (
 	"News/service/internal/utils"
 )
 
-type CreateOuterLayerArgs struct {
-	Query      []*newsDaoModel.OuterLayer
-	SourceNews string
-}
-
-type CreateOuterLayerReply struct{}
-
 type CreateNewsArgs struct {
 	Query      []*newsDaoModel.News
 	SourceNews string
@@ -40,25 +33,6 @@ type GetNewsFilterArgs struct {
 type GetNewsFilterReply struct {
 	Data       []*newsDaoModel.News
 	Pagination utils.Pagination
-}
-
-type GetOuterLayerArgs struct {
-	Query []*newsDaoModel.OuterLayer
-}
-
-type GetOuterLayerReply struct {
-	Data []*newsDaoModel.OuterLayer
-}
-
-type GetFilterOuterLayerArgs struct {
-	Query        *newsDaoModel.OuterLayer
-	Pagination   daoModel.Pagenation
-	TimeInterval daoModel.TimeInterval
-}
-
-type GetFilterOuterLayerReply struct {
-	Data       []*newsDaoModel.OuterLayer
-	Pagination daoModel.Pagenation
 }
 
 type CreateContentLayerArgs struct {

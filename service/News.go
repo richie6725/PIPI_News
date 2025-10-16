@@ -4,7 +4,6 @@ import (
 	NewsApi "News/service/api/News"
 	"News/service/controller/aclCtrl"
 	"News/service/controller/newsCtrl"
-	"News/service/controller/noteCtrl"
 	"News/service/internal/config"
 	"News/service/internal/database"
 	"context"
@@ -75,9 +74,6 @@ func (srv *NewsServer) provideController(container *dig.Container) {
 	if err := container.Provide(aclCtrl.NewAcl); err != nil {
 		panic(err)
 	}
-	if err := container.Provide(noteCtrl.NewNote); err != nil {
-		panic(err)
-	}
 
 	if err := container.Provide(newsCtrl.NewNews); err != nil {
 		panic(err)
@@ -93,9 +89,6 @@ func (srv *NewsServer) invokeApiRoutes(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Invoke(NewsApi.NewAcl); err != nil {
-		panic(err)
-	}
-	if err := container.Invoke(NewsApi.NewNote); err != nil {
 		panic(err)
 	}
 
