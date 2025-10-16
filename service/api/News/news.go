@@ -18,7 +18,7 @@ func NewNews(pack newsApiPack) {
 	{
 		group.POST("CreateNews", c.createNews)
 		group.GET("GetNews", c.getNews)
-		group.GET("GetNewsFilter", c.getNewsFilter)
+		group.POST("GetNewsFilter", c.getNewsFilter)
 	}
 
 }
